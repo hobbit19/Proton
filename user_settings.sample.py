@@ -17,4 +17,7 @@ user_settings = {
 
     #Disable in-process synchronization primitives
 #    "PROTON_NO_ESYNC": "1",
+
+    #Enable Gallium Nine
+#    "PROTON_USE_GALLIUM_NINE": "1",
 }

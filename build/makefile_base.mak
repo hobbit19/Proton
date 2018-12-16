@@ -704,13 +704,14 @@ $(WINE_CONFIGURE_FILES64): $(MAKEFILE_DEP) | $(WINE_OBJ64)
 	cd $(dir $@) && \
 		STRIP=$(STRIP_QUOTED) \
 		CFLAGS=-I$(abspath $(TOOLS_DIR64))"/include -g $(COMMON_FLAGS)" \
-		LDFLAGS="-L$(abspath $(TOOLS_DIR64))/lib -Wl,-rpath-link,$(abspath $(TOOLS_DIR64))/lib" \
+		LDFLAGS="-L/usr/local/lib -L$(abspath $(TOOLS_DIR64))/lib -Wl,-rpath-link,$(abspath $(TOOLS_DIR64))/lib" \
 		PKG_CONFIG_PATH=$(abspath $(TOOLS_DIR64))/lib/pkgconfig \
 		CC=$(CC_QUOTED) \
 		CXX=$(CXX_QUOTED) \
 		../$(WINE)/configure \
 			$(WINE64_AUTOCONF) \
 			--without-curses \
+			--with-d3d9-nine \
 			--enable-win64 --disable-tests --prefix=$(abspath $(DST_DIR))
 
 # 32-bit configure
@@ -719,13 +720,14 @@ $(WINE_CONFIGURE_FILES32): $(MAKEFILE_DEP) | $(WINE_OBJ32) $(WINE_ORDER_DEPS32)
 	cd $(dir $@) && \
 		STRIP=$(STRIP_QUOTED) \
 		CFLAGS=-I$(abspath $(TOOLS_DIR32))"/include -g $(COMMON_FLAGS)" \
-		LDFLAGS="-L$(abspath $(TOOLS_DIR32))/lib -Wl,-rpath-link,$(abspath $(TOOLS_DIR32))/lib" \
+		LDFLAGS="-L/usr/local/lib -L$(abspath $(TOOLS_DIR32))/lib -Wl,-rpath-link,$(abspath $(TOOLS_DIR32))/lib" \
 		PKG_CONFIG_PATH=$(abspath $(TOOLS_DIR32))/lib/pkgconfig \
 		CC=$(CC_QUOTED) \
 		CXX=$(CXX_QUOTED) \
 		../$(WINE)/configure \
 			$(WINE32_AUTOCONF) \
 			--without-curses \
+			--with-d3d9-nine \
 			--disable-tests --prefix=$(abspath $(WINE_DST32))
 
 ## wine goals

@@ -420,6 +420,12 @@ if "WINEDLLOVERRIDES" in os.environ:
 else:
     env["WINEDLLOVERRIDES"] = s
 
+check_environment("PROTON_USE_GALLIUM_NINE", "galliumnine")
+if "galliumnine" in config_opts:
+    run_wine([wine_path, "reg", "add", "HKEY_CURRENT_USER\\Software\\Wine\\DllRedirects", "/v", "d3d9", "/d", "d3d9-nine.dll", "/f"])
+else:
+    run_wine([wine_path, "reg", "delete", "HKEY_CURRENT_USER\\Software\\Wine\\DllRedirects", "/v", "d3d9", "/f"])
+
 ARCH_UNKNOWN=0
 ARCH_I386=1
 ARCH_X86_64=2
