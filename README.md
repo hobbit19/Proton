@@ -145,7 +145,7 @@ Build Proton
 ---
 A couple of Makefile targets are provided.
 
-`make dist` will create a Proton installation in `dist/` that you can install
+`make all dist` will create a Proton installation in `dist/` that you can install
 manually (see below), or automatically with `make install`.
 
 `make deploy` will package Proton up for distribution via Steamworks.
@@ -210,5 +210,6 @@ the Wine prefix. Removing the option will revert to the previous behavior.
 | <tt>wined3d</tt>      | <tt>PROTON_USE_WINED3D</tt>    | Use OpenGL-based wined3d instead of Vulkan-based DXVK for d3d11 and d3d10. This used to be called `PROTON_USE_WINED3D11`, which is now an alias for this same option. |
 | <tt>nod3d11</tt>      | <tt>PROTON_NO_D3D11</tt>       | Disable <tt>d3d11.dll</tt>, for games which can fall back to and run better with d3d9. |
 | <tt>noesync</tt>      | <tt>PROTON_NO_ESYNC</tt>       | Do not use eventfd-based in-process synchronization primitives. |
+| <tt>galliumnine</tt>  | <tt>PROTON_USE_GALLIUM_NINE</tt> | Use Gallium Nine (can also be enabled on the staging tab in winecfg). |
 
 <!-- Target:  GitHub Flavor Markdown.  To test locally:  pandoc -f markdown_github -t html README.md  -->
