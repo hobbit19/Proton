@@ -211,5 +211,6 @@ the Wine prefix. Removing the option will revert to the previous behavior.
 | <tt>nod3d11</tt>      | <tt>PROTON_NO_D3D11</tt>       | Disable <tt>d3d11.dll</tt>, for games which can fall back to and run better with d3d9. |
 | <tt>noesync</tt>      | <tt>PROTON_NO_ESYNC</tt>       | Do not use eventfd-based in-process synchronization primitives. |
 | <tt>galliumnine</tt>  | <tt>PROTON_USE_GALLIUM_NINE</tt> | Use Gallium Nine (can also be enabled on the staging tab in winecfg). |
+|                       | <tt>PROTON_GALLIUM_NINE_MODULEPATH</tt> | Set the modulepath for `d3dadapter9.so.1`. By default `/usr/lib32/d3d/d3dadapter9.so.1:/usr/lib64/d3d/d3dadapter9.so.1` |
 
 <!-- Target:  GitHub Flavor Markdown.  To test locally:  pandoc -f markdown_github -t html README.md  -->

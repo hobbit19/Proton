@@ -20,4 +20,7 @@ user_settings = {
 
     #Enable Gallium Nine
 #    "PROTON_USE_GALLIUM_NINE": "1",
+
+    #Specify d3dadapter9.so.1 path
+#    "PROTON_GALLIUM_NINE_MODULEPATH": "/usr/lib32/d3d/d3dadapter9.so.1:/usr/lib64/d3d/d3dadapter9.so.1",
 }

@@ -423,6 +423,11 @@ else:
 check_environment("PROTON_USE_GALLIUM_NINE", "galliumnine")
 if "galliumnine" in config_opts:
     run_wine([wine_path, "reg", "add", "HKEY_CURRENT_USER\\Software\\Wine\\DllRedirects", "/v", "d3d9", "/d", "d3d9-nine.dll", "/f"])
+    if "PROTON_GALLIUM_NINE_MODULEPATH" in os.environ:
+        env["PROTON_GALLIUM_NINE_MODULEPATH"] = os.environ["PROTON_GALLIUM_NINE_MODULEPATH"]
+    elif not "PROTON_GALLIUM_NINE_MODULEPATH" in env:
+        env["PROTON_GALLIUM_NINE_MODULEPATH"] = "/usr/lib32/d3d/d3dadapter9.so.1:/usr/lib64/d3d/d3dadapter9.so.1"
+    run_wine([wine_path, "reg", "add", "HKEY_CURRENT_USER\\Software\\Wine\\Direct3DNine", "/v", "ModulePath", "/d", env["PROTON_GALLIUM_NINE_MODULEPATH"], "/f"])
 else:
     run_wine([wine_path, "reg", "delete", "HKEY_CURRENT_USER\\Software\\Wine\\DllRedirects", "/v", "d3d9", "/f"])
 
