@@ -3,7 +3,7 @@
     url = https://github.com/popsUlfr/wine/
 [submodule "dxvk"]
 	path = dxvk
-	url = https://github.com/doitsujin/dxvk/
+	url = https://github.com/ValveSoftware/dxvk/
 [submodule "openal-soft"]
 	path = openal-soft
 	url = https://github.com/kcat/openal-soft.git
