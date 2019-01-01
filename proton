@@ -454,6 +454,19 @@ else:
         "/v", "d3d9",
         "/f"], env=env, stdout=DEVNULL, stderr=DEVNULL)
 
+check_environment("PROTON_NO_GLSL", "noglsl")
+subprocess.call([wine_path, "reg", "add",
+    "HKEY_CURRENT_USER\\Software\\Wine\\Direct3D",
+    "/v", "UseGLSL",
+    "/d", "disabled" if "noglsl" in config_opts else "enabled",
+    "/f"], env=env, stdout=DEVNULL, stderr=DEVNULL)
+subprocess.call([wine_path, "reg", "add",
+    "HKEY_CURRENT_USER\\Software\\Wine\\Direct3D",
+    "/v", "MaxVersionGL",
+    "/t", "REG_DWORD",
+    "/d", "0x00030001" if "noglsl" in config_opts else "0",
+    "/f"], env=env, stdout=DEVNULL, stderr=DEVNULL)
+
 ARCH_UNKNOWN=0
 ARCH_I386=1
 ARCH_X86_64=2

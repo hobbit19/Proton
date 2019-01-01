@@ -23,4 +23,7 @@ user_settings = {
 
     #Specify d3dadapter9.so.1 path
 #    "PROTON_GALLIUM_NINE_MODULEPATH": "/usr/lib32/d3d/d3dadapter9.so.1:/usr/lib64/d3d/d3dadapter9.so.1",
+
+    #Disable GLSL shaders and use ARB shaders instead
+#    "PROTON_NO_GLSL": "1",
 }

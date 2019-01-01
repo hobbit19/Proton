@@ -213,5 +213,6 @@ the Wine prefix. Removing the option will revert to the previous behavior.
 | <tt>forcelgadd</tt>   | <tt>PROTON_FORCE_LARGE_ADDRESS_AWARE</tt> | Force Wine to enable the LARGE_ADDRESS_AWARE flag for all executables. |
 | <tt>galliumnine</tt>  | <tt>PROTON_USE_GALLIUM_NINE</tt> | Use Gallium Nine (can also be enabled on the staging tab in winecfg). |
 |                       | <tt>PROTON_GALLIUM_NINE_MODULEPATH</tt> | Set the modulepath for `d3dadapter9.so.1`. By default `/usr/lib32/d3d/d3dadapter9.so.1:/usr/lib64/d3d/d3dadapter9.so.1` |
+| <tt>noglsl</tt>       | <tt>PROTON_NO_GLSL</tt> | Disable GLSL shaders and use ARB shaders instead. Can reduce stuttering when using wined3d. |
 
 <!-- Target:  GitHub Flavor Markdown.  To test locally:  pandoc -f markdown_github -t html README.md  -->
