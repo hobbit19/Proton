@@ -102,6 +102,11 @@ function configure() {
     if [[ -n $arg_ffmpeg ]]; then
       echo "WITH_FFMPEG := 1"
     fi
+    
+    # vkd3d?
+    if [[ -n $arg_vkd3d ]]; then
+      echo "WITH_VKD3D := 1"
+    fi
 
     # SteamRT
     echo "STEAMRT64_MODE  := $(escape_for_make "$steamrt64_type")"
@@ -126,6 +131,7 @@ arg_steamrt32=""
 arg_steamrt64=""
 arg_no_steamrt=""
 arg_ffmpeg=""
+arg_vkd3d=""
 arg_build_name=""
 arg_help=""
 invalid_args=""
@@ -165,6 +171,8 @@ function parse_args() {
       val_used=1
     elif [[ $arg = --with-ffmpeg ]]; then
       arg_ffmpeg=1
+    elif [[ $arg = --with-vkd3d ]]; then
+      arg_vkd3d=1
     elif [[ $arg = --steam-runtime32 ]]; then
       val_used=1
       arg_steamrt32="$val"
@@ -217,6 +225,8 @@ usage() {
   "$1" "    --build-name=<name>  Set the name of the build that displays when used in Steam"
   "$1" ""
   "$1" "    --with-ffmpeg        Build ffmpeg for WMA audio support"
+  "$1" ""
+  "$1" "    --with-vkd3d         Build vkd3d for dx12 support"
   "$1" ""
   "$1" "  Steam Runtime"
   "$1" "    Proton builds that are to be installed & run under the steam client must be built with"

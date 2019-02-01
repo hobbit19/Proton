@@ -27,6 +27,7 @@ else # (Rest of the file is the else)
 #   BUILD_NAME      - Name of the build for manifests etc.
 #   NO_DXVK         - 1 if skipping DXVK steps
 #   WITH_FFMPEG     - 1 if including ffmpeg steps
+#   WITH_VKD3D      - 1 if including vkd3d steps
 #   STEAMRT64_MODE  - 'docker' or '' for automatic Steam Runtime container
 #   STEAMRT64_IMAGE - Name of the image if mode is set
 #   STEAMRT32_MODE  - Same as above for 32-bit container (can be different type)
@@ -178,6 +179,20 @@ FAUDIO := $(SRCDIR)/FAudio
 FAUDIO_OBJ32 := ./obj-faudio32
 FAUDIO_OBJ64 := ./obj-faudio64
 
+SPIRV_TOOLS := $(SRCDIR)/spirv-tools
+SPIRV_TOOLS_OBJ32 := ./obj-spirv-tools32
+SPIRV_TOOLS_OBJ64 := ./obj-spirv-tools64
+
+WIDL := $(SRCDIR)/wine
+WIDL_OBJ32 := ./obj-widl32
+WIDL_OBJ64 := ./obj-widl64
+WIDL_BIN32 := $(WIDL_OBJ32)/tools/widl/widl
+WIDL_BIN64 := $(WIDL_OBJ64)/tools/widl/widl
+
+VKD3D := $(SRCDIR)/vkd3d
+VKD3D_OBJ32 := ./obj-vkd3d32
+VKD3D_OBJ64 := ./obj-vkd3d64
+
 LSTEAMCLIENT := $(SRCDIR)/lsteamclient
 LSTEAMCLIENT32 := ./syn-lsteamclient32/lsteamclient
 LSTEAMCLIENT64 := ./syn-lsteamclient64/lsteamclient
@@ -224,6 +239,9 @@ FONTS_OBJ := ./obj-fonts
 OBJ_DIRS := $(TOOLS_DIR32)        $(TOOLS_DIR64)        \
             $(FFMPEG_OBJ32)       $(FFMPEG_OBJ64)       \
             $(FAUDIO_OBJ32)       $(FAUDIO_OBJ64)       \
+            $(SPIRV_TOOLS_OBJ32)  $(SPIRV_TOOLS_OBJ64)  \
+            $(WIDL_OBJ32)         $(WIDL_OBJ64)         \
+            $(VKD3D_OBJ32)        $(VKD3D_OBJ64)        \
             $(LSTEAMCLIENT_OBJ32) $(LSTEAMCLIENT_OBJ64) \
             $(WINE_OBJ32)         $(WINE_OBJ64)         \
             $(VRCLIENT_OBJ32)     $(VRCLIENT_OBJ64)     \
@@ -513,6 +531,193 @@ faudio64: $(FAUDIO_CONFIGURE_FILES64)
 	cp -L $(TOOLS_DIR64)/lib/libFAudio* $(DST_DIR)/lib64/
 	[ x"$(STRIP)" = x ] || $(STRIP) $(DST_DIR)/lib64/libFAudio.so
 
+ifeq ($(WITH_VKD3D),1)
+
+##
+## SPIRV-tools
+##
+
+SPIRV_TOOLS_CMAKE_FLAGS = -DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_LIBDIR="lib" \
+	-DSPIRV_WERROR=OFF \
+	-DSPIRV_SKIP_EXECUTABLES=ON \
+	-DSPIRV-Headers_SOURCE_DIR="$(abspath $(SRCDIR))/spirv-headers"
+
+## SPIRV-tools goals
+SPIRV_TOOLS_TARGETS = spirv-tools spirv-tools32 spirv-tools64
+
+ALL_TARGETS += $(SPIRV_TOOLS_TARGETS)
+GOAL_TARGETS_LIBS += spirv-tools
+
+.PHONY: spirv-tools spirv-tools32 spirv-tools64
+
+spirv-tools: spirv-tools32 spirv-tools64
+
+SPIRV_TOOLS_CONFIGURE_FILES32 := $(SPIRV_TOOLS_OBJ32)/Makefile
+SPIRV_TOOLS_CONFIGURE_FILES64 := $(SPIRV_TOOLS_OBJ64)/Makefile
+
+$(SPIRV_TOOLS_CONFIGURE_FILES32): SHELL = $(CONTAINER_SHELL32)
+$(SPIRV_TOOLS_CONFIGURE_FILES32): $(SPIRV_TOOLS)/CMakeLists.txt $(MAKEFILE_DEP) $(CMAKE_BIN32) | $(SPIRV_TOOLS_OBJ32)
+
+	cd $(dir $@) && \
+		../$(CMAKE_BIN32) $(abspath $(SPIRV_TOOLS)) \
+			$(SPIRV_TOOLS_CMAKE_FLAGS) \
+			-DCMAKE_INSTALL_PREFIX="$(abspath $(TOOLS_DIR32))" \
+			-DCMAKE_C_FLAGS="-m32 -g $(COMMON_FLAGS)" \
+			-DCMAKE_CXX_FLAGS="-m32 -g $(COMMON_FLAGS)"
+
+$(SPIRV_TOOLS_CONFIGURE_FILES64): SHELL = $(CONTAINER_SHELL64)
+$(SPIRV_TOOLS_CONFIGURE_FILES64): $(SPIRV_TOOLS)/CMakeLists.txt $(MAKEFILE_DEP) $(CMAKE_BIN64) | $(SPIRV_TOOLS_OBJ64)
+
+	cd $(dir $@) && \
+		../$(CMAKE_BIN64) $(abspath $(SPIRV_TOOLS)) \
+			$(SPIRV_TOOLS_CMAKE_FLAGS) \
+			-DCMAKE_INSTALL_PREFIX="$(abspath $(TOOLS_DIR64))" \
+			-DCMAKE_C_FLAGS="-g $(COMMON_FLAGS)" \
+			-DCMAKE_CXX_FLAGS="-g $(COMMON_FLAGS)"
+
+spirv-tools32: SHELL = $(CONTAINER_SHELL32)
+spirv-tools32: $(SPIRV_TOOLS_CONFIGURE_FILES32)
+	+$(MAKE) -C $(SPIRV_TOOLS_OBJ32) VERBOSE=1
+	+$(MAKE) -C $(SPIRV_TOOLS_OBJ32) install VERBOSE=1
+	sed -i 's/^\(Libs: .*\)$$/\1 -lrt/' $(TOOLS_DIR32)/lib/pkgconfig/SPIRV-Tools-shared.pc # add -lrt on < glibc-2.17
+	mkdir -p $(DST_DIR)/lib
+	cp -a $(TOOLS_DIR32)/lib/libSPIRV-Tools-shared.so* $(DST_DIR)/lib/
+	[ x"$(STRIP)" = x ] || $(STRIP) $(DST_DIR)/lib/libSPIRV-Tools-shared.so*
+
+spirv-tools64: SHELL = $(CONTAINER_SHELL64)
+spirv-tools64: $(SPIRV_TOOLS_CONFIGURE_FILES64)
+	+$(MAKE) -C $(SPIRV_TOOLS_OBJ64) VERBOSE=1
+	+$(MAKE) -C $(SPIRV_TOOLS_OBJ64) install VERBOSE=1
+	sed -i 's/^\(Libs: .*\)$$/\1 -lrt/' $(TOOLS_DIR64)/lib/pkgconfig/SPIRV-Tools-shared.pc # add -lrt on < glibc-2.17
+	mkdir -p $(DST_DIR)/lib64
+	cp -a $(TOOLS_DIR64)/lib/libSPIRV-Tools-shared.so* $(DST_DIR)/lib64/
+	[ x"$(STRIP)" = x ] || $(STRIP) $(DST_DIR)/lib64/libSPIRV-Tools-shared.so*
+
+##
+## widl
+##
+
+WIDL_CONFIGURE_FILES32 := $(WIDL_OBJ32)/Makefile
+WIDL_CONFIGURE_FILES64 := $(WIDL_OBJ64)/Makefile
+
+# 64bit-configure
+$(WIDL_CONFIGURE_FILES64): SHELL = $(CONTAINER_SHELL64)
+$(WIDL_CONFIGURE_FILES64): $(MAKEFILE_DEP) | $(WIDL_OBJ64)
+	cd $(dir $@) && \
+		CC=$(CC_QUOTED) \
+		CXX=$(CXX_QUOTED) \
+		../$(WIDL)/configure \
+			--without-curses \
+			--enable-win64 --disable-tests
+
+# 32-bit configure
+$(WIDL_CONFIGURE_FILES32): SHELL = $(CONTAINER_SHELL32)
+$(WIDL_CONFIGURE_FILES32): $(MAKEFILE_DEP) | $(WIDL_OBJ32)
+	cd $(dir $@) && \
+		CC=$(CC_QUOTED) \
+		CXX=$(CXX_QUOTED) \
+		../$(WIDL)/configure \
+			--without-curses \
+			--disable-tests
+
+WIDL_TARGETS = widl widl_configure widl32 widl64 widl_configure32 widl_configure64
+
+ALL_TARGETS += $(WIDL_TARGETS)
+GOAL_TARGETS += widl
+
+.PHONY: $(WIDL_TARGETS)
+
+widl_configure: $(WIDL_CONFIGURE_FILES32) $(WIDL_CONFIGURE_FILES64)
+
+widl_configure64: $(WIDL_CONFIGURE_FILES64)
+
+widl_configure32: $(WIDL_CONFIGURE_FILES32)
+
+widl: widl32 widl64
+
+$(WIDL_BIN64) widl64: SHELL = $(CONTAINER_SHELL64)
+$(WIDL_BIN64) widl64: $(WIDL_CONFIGURE_FILES64)
+	+$(MAKE) -C $(WIDL_OBJ64) tools/widl
+	touch $(WIDL_BIN64)
+
+$(WIDL_BIN32) widl32: SHELL = $(CONTAINER_SHELL32)
+$(WIDL_BIN32) widl32: $(WIDL_CONFIGURE_FILES32)
+	+$(MAKE) -C $(WIDL_OBJ32) tools/widl
+	touch $(WIDL_BIN32)
+
+##
+## vkd3d
+##
+
+VKD3D_CONFIGURE_FILES32 := $(VKD3D_OBJ32)/Makefile
+VKD3D_CONFIGURE_FILES64 := $(VKD3D_OBJ64)/Makefile
+
+$(VKD3D)/configure: SHELL = $(CONTAINER_SHELL64)
+$(VKD3D)/configure:
+	cd $(abspath $(VKD3D)) && \
+		./autogen.sh && \
+		sed -i -r 's/(hardcode_into_libs)=.*$$/\1=no/' ./configure # disable hardcoded rpaths
+
+# 64bit-configure
+$(VKD3D_CONFIGURE_FILES64): SHELL = $(CONTAINER_SHELL64)
+$(VKD3D_CONFIGURE_FILES64): $(VKD3D)/configure $(MAKEFILE_DEP) $(WIDL_BIN64) spirv-tools64 | $(VKD3D_OBJ64)
+		cd $(dir $@) && \
+		WIDL="$(abspath $(WIDL_BIN64))" \
+		CC="$(CC_QUOTED)" \
+		CFLAGS="-I$(abspath $(SRCDIR))/vulkan-headers/include -I$(abspath $(SRCDIR))/spirv-headers/include -g $(COMMON_FLAGS)" \
+		PKG_CONFIG_PATH="$(abspath $(TOOLS_DIR64))/lib/pkgconfig" \
+		$(abspath $(VKD3D))/configure \
+			--prefix="$(abspath $(TOOLS_DIR64))" \
+			--disable-static \
+			--with-spirv-tools
+
+# 32-bit configure
+$(VKD3D_CONFIGURE_FILES32): SHELL = $(CONTAINER_SHELL32)
+$(VKD3D_CONFIGURE_FILES32): $(VKD3D)/configure $(MAKEFILE_DEP) $(WIDL_BIN32) spirv-tools32 | $(VKD3D_OBJ32)
+		cd $(dir $@) && \
+		WIDL="$(abspath $(WIDL_BIN32))" \
+		CC="$(CC_QUOTED)" \
+		CFLAGS="-I$(abspath $(SRCDIR))/vulkan-headers/include -I$(abspath $(SRCDIR))/spirv-headers/include -m32 -g $(COMMON_FLAGS)" \
+		LDFLAGS="-m32" \
+		PKG_CONFIG_PATH="$(abspath $(TOOLS_DIR32))/lib/pkgconfig" \
+		$(abspath $(VKD3D))/configure \
+			--prefix="$(abspath $(TOOLS_DIR32))" \
+			--disable-static \
+			--with-spirv-tools
+
+## vkd3d goals
+VKD3D_TARGETS = vkd3d vkd3d_configure vkd3d32 vkd3d64 vkd3d_configure32 vkd3d_configure64
+
+ALL_TARGETS += $(VKD3D_TARGETS)
+GOAL_TARGETS_LIBS += vkd3d
+
+.PHONY: $(VKD3D_TARGETS)
+
+vkd3d_configure: $(VKD3D_CONFIGURE_FILES32) $(VKD3D_CONFIGURE_FILES64)
+
+vkd3d_configure64: $(VKD3D_CONFIGURE_FILES64)
+
+vkd3d_configure32: $(VKD3D_CONFIGURE_FILES32)
+
+vkd3d: vkd3d32 vkd3d64
+
+vkd3d64: SHELL = $(CONTAINER_SHELL64)
+vkd3d64: $(VKD3D_CONFIGURE_FILES64)
+	+$(MAKE) -C $(VKD3D_OBJ64)
+	+$(MAKE) -C $(VKD3D_OBJ64) install
+	mkdir -pv $(DST_DIR)/lib64
+	cp -a $(TOOLS_DIR64)/lib/{libvkd3d.so,libvkd3d-shader.so}* $(DST_DIR)/lib64
+
+vkd3d32: SHELL = $(CONTAINER_SHELL32)
+vkd3d32: $(VKD3D_CONFIGURE_FILES32)
+	+$(MAKE) -C $(VKD3D_OBJ32)
+	+$(MAKE) -C $(VKD3D_OBJ32) install
+	mkdir -pv $(DST_DIR)/lib
+	cp -a $(TOOLS_DIR32)/lib/{libvkd3d.so,libvkd3d-shader.so}* $(DST_DIR)/lib
+
+endif # ifeq ($(WITH_VKD3D),1)
+
 ##
 ## lsteamclient
 ##
@@ -634,7 +839,7 @@ WINE32_MAKE_ARGS := \
 
 # 64bit-configure
 $(WINE_CONFIGURE_FILES64): SHELL = $(CONTAINER_SHELL64)
-$(WINE_CONFIGURE_FILES64): $(MAKEFILE_DEP) | $(WINE_OBJ64)
+$(WINE_CONFIGURE_FILES64): $(MAKEFILE_DEP) $(ifeq ($(WITH_VKD3D),1),vkd3d64,) | $(WINE_OBJ64)
 	cd $(dir $@) && \
 		STRIP=$(STRIP_QUOTED) \
 		CFLAGS="-I$(abspath $(TOOLS_DIR64))/include -I$(abspath $(SRCDIR))/contrib/include -g $(COMMON_FLAGS)" \
@@ -650,7 +855,7 @@ $(WINE_CONFIGURE_FILES64): $(MAKEFILE_DEP) | $(WINE_OBJ64)
 
 # 32-bit configure
 $(WINE_CONFIGURE_FILES32): SHELL = $(CONTAINER_SHELL32)
-$(WINE_CONFIGURE_FILES32): $(MAKEFILE_DEP) | $(WINE_OBJ32) $(WINE_ORDER_DEPS32)
+$(WINE_CONFIGURE_FILES32): $(MAKEFILE_DEP) $(ifeq ($(WITH_VKD3D),1),vkd3d32,) | $(WINE_OBJ32) $(WINE_ORDER_DEPS32)
 	cd $(dir $@) && \
 		STRIP=$(STRIP_QUOTED) \
 		CFLAGS="-I$(abspath $(TOOLS_DIR32))/include -I$(abspath $(SRCDIR))/contrib/include -g $(COMMON_FLAGS)" \
